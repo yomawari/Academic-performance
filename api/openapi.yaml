@@ -1,0 +1,801 @@
+openapi: 3.0.3
+info:
+  title: Academic Performance API
+  version: 0.1.0
+  description: |
+    Контракт между SPA-клиентом и сервером информационной системы
+    «Учёт успеваемости». Контракт является первичным артефактом:
+    модели сервера и JavaScript-клиент генерируются из этого файла.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Локальный сервер разработки
+tags:
+  - name: Auth
+    description: Аутентификация и текущий пользователь
+  - name: Groups
+    description: Учебные группы
+  - name: Students
+    description: Студенты
+  - name: Teachers
+    description: Преподаватели
+  - name: Subjects
+    description: Дисциплины
+  - name: Dashboard
+    description: Сводные показатели
+paths:
+  /api/health:
+    get:
+      tags: [Auth]
+      operationId: health
+      summary: Проверка доступности сервера
+      security: []
+      responses:
+        '200':
+          description: Сервер доступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Вход в систему
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успешный вход, session-cookie установлена
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Текущий пользователь
+      responses:
+        '200':
+          description: Данные текущего пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Выход из системы
+      responses:
+        '204':
+          description: Сессия завершена
+  /api/groups:
+    get:
+      tags: [Groups]
+      operationId: listGroups
+      summary: Список учебных групп
+      responses:
+        '200':
+          description: Список групп
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+    post:
+      tags: [Groups]
+      operationId: createGroup
+      summary: Создать учебную группу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreate'
+      responses:
+        '201':
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/groups/{group_id}:
+    parameters:
+      - $ref: '#/components/parameters/GroupId'
+    patch:
+      tags: [Groups]
+      operationId: updateGroup
+      summary: Изменить учебную группу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdate'
+      responses:
+        '200':
+          description: Группа изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Groups]
+      operationId: deleteGroup
+      summary: Удалить учебную группу
+      responses:
+        '204':
+          description: Группа удалена
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/students:
+    get:
+      tags: [Students]
+      operationId: listStudents
+      summary: Список студентов
+      parameters:
+        - name: group_id
+          in: query
+          description: Фильтр по учебной группе
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Поиск по ФИО или номеру зачётной книжки
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        '200':
+          description: Список студентов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Student'
+    post:
+      tags: [Students]
+      operationId: createStudent
+      summary: Добавить студента
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentCreate'
+      responses:
+        '201':
+          description: Студент добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/students/{student_id}:
+    parameters:
+      - $ref: '#/components/parameters/StudentId'
+    get:
+      tags: [Students]
+      operationId: getStudent
+      summary: Студент по идентификатору
+      responses:
+        '200':
+          description: Студент
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Students]
+      operationId: updateStudent
+      summary: Изменить данные студента
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentUpdate'
+      responses:
+        '200':
+          description: Данные студента изменены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Students]
+      operationId: deleteStudent
+      summary: Удалить студента
+      responses:
+        '204':
+          description: Студент удалён
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/teachers:
+    get:
+      tags: [Teachers]
+      operationId: listTeachers
+      summary: Список преподавателей
+      responses:
+        '200':
+          description: Список преподавателей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Teacher'
+    post:
+      tags: [Teachers]
+      operationId: createTeacher
+      summary: Добавить преподавателя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherCreate'
+      responses:
+        '201':
+          description: Преподаватель добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teacher'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/teachers/{teacher_id}:
+    parameters:
+      - $ref: '#/components/parameters/TeacherId'
+    patch:
+      tags: [Teachers]
+      operationId: updateTeacher
+      summary: Изменить данные преподавателя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherUpdate'
+      responses:
+        '200':
+          description: Данные преподавателя изменены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teacher'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Teachers]
+      operationId: deleteTeacher
+      summary: Удалить преподавателя
+      responses:
+        '204':
+          description: Преподаватель удалён
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/subjects:
+    get:
+      tags: [Subjects]
+      operationId: listSubjects
+      summary: Список дисциплин
+      responses:
+        '200':
+          description: Список дисциплин
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subject'
+    post:
+      tags: [Subjects]
+      operationId: createSubject
+      summary: Создать дисциплину
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectCreate'
+      responses:
+        '201':
+          description: Дисциплина создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/subjects/{subject_id}:
+    parameters:
+      - $ref: '#/components/parameters/SubjectId'
+    patch:
+      tags: [Subjects]
+      operationId: updateSubject
+      summary: Изменить дисциплину
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectUpdate'
+      responses:
+        '200':
+          description: Дисциплина изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Subjects]
+      operationId: deleteSubject
+      summary: Удалить дисциплину
+      responses:
+        '204':
+          description: Дисциплина удалена
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: getDashboard
+      summary: Сводные показатели для главного экрана
+      responses:
+        '200':
+          description: Показатели
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStats'
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+  parameters:
+    GroupId:
+      name: group_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    StudentId:
+      name: student_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    TeacherId:
+      name: teacher_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    SubjectId:
+      name: subject_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Недостаточно прав
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Объект не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Нарушение уникальности или целостности данных
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Health:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        version:
+          type: string
+          example: 0.1.0
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+        code:
+          type: string
+          nullable: true
+    Message:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    Role:
+      type: string
+      enum: [admin, teacher, student]
+    User:
+      type: object
+      required: [id, username, full_name, role, is_active, created_at]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        full_name:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 64
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+    Group:
+      type: object
+      required: [id, name, course, student_count]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        course:
+          type: integer
+          minimum: 1
+          maximum: 6
+        curator_id:
+          type: integer
+          nullable: true
+        curator_name:
+          type: string
+          nullable: true
+        student_count:
+          type: integer
+    GroupCreate:
+      type: object
+      required: [name, course]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 40
+        course:
+          type: integer
+          minimum: 1
+          maximum: 6
+        curator_id:
+          type: integer
+          nullable: true
+    GroupUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 40
+        course:
+          type: integer
+          minimum: 1
+          maximum: 6
+        curator_id:
+          type: integer
+          nullable: true
+    Student:
+      type: object
+      required: [id, user_id, username, full_name, record_book_no, is_active]
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        username:
+          type: string
+        full_name:
+          type: string
+        group_id:
+          type: integer
+          nullable: true
+        group_name:
+          type: string
+          nullable: true
+        record_book_no:
+          type: string
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    StudentCreate:
+      type: object
+      required: [username, password, full_name, record_book_no]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+          pattern: '^[A-Za-z0-9_.-]+$'
+        password:
+          type: string
+          minLength: 6
+          maxLength: 128
+        full_name:
+          type: string
+          minLength: 3
+          maxLength: 120
+        group_id:
+          type: integer
+          nullable: true
+        record_book_no:
+          type: string
+          minLength: 2
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          maxLength: 30
+          nullable: true
+    StudentUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+          minLength: 3
+          maxLength: 120
+        group_id:
+          type: integer
+          nullable: true
+        record_book_no:
+          type: string
+          minLength: 2
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          maxLength: 30
+          nullable: true
+        is_active:
+          type: boolean
+    Teacher:
+      type: object
+      required: [id, user_id, username, full_name, department, position, subject_count, is_active]
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        username:
+          type: string
+        full_name:
+          type: string
+        department:
+          type: string
+        position:
+          type: string
+        subject_count:
+          type: integer
+        is_active:
+          type: boolean
+    TeacherCreate:
+      type: object
+      required: [username, password, full_name, department, position]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+          pattern: '^[A-Za-z0-9_.-]+$'
+        password:
+          type: string
+          minLength: 6
+          maxLength: 128
+        full_name:
+          type: string
+          minLength: 3
+          maxLength: 120
+        department:
+          type: string
+          minLength: 2
+          maxLength: 80
+        position:
+          type: string
+          minLength: 2
+          maxLength: 80
+    TeacherUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+          minLength: 3
+          maxLength: 120
+        department:
+          type: string
+          minLength: 2
+          maxLength: 80
+        position:
+          type: string
+          minLength: 2
+          maxLength: 80
+        is_active:
+          type: boolean
+    Subject:
+      type: object
+      required: [id, code, title, description, hours, group_count, teacher_count]
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        hours:
+          type: integer
+        teacher_id:
+          type: integer
+          nullable: true
+        teacher_name:
+          type: string
+          nullable: true
+        group_count:
+          type: integer
+        teacher_count:
+          type: integer
+    SubjectCreate:
+      type: object
+      required: [code, title, hours]
+      properties:
+        code:
+          type: string
+          minLength: 2
+          maxLength: 20
+          pattern: '^[A-Za-zА-Яа-я0-9_.-]+$'
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 1000
+          default: ''
+        hours:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        teacher_id:
+          type: integer
+          nullable: true
+    SubjectUpdate:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 2
+          maxLength: 20
+          pattern: '^[A-Za-zА-Яа-я0-9_.-]+$'
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 1000
+        hours:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        teacher_id:
+          type: integer
+          nullable: true
+    DashboardStats:
+      type: object
+      required:
+        - students
+        - groups
+        - teachers
+        - subjects
+        - lessons
+        - grades
+      properties:
+        students:
+          type: integer
+        groups:
+          type: integer
+        teachers:
+          type: integer
+        subjects:
+          type: integer
+        lessons:
+          type: integer
+        grades:
+          type: integer
+        average_grade:
+          type: number
+          format: float
+          nullable: true
+security:
+  - cookieAuth: []

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Учёт успеваемости</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+  </head>
+  <body>
+    <section id="login-screen" class="login">
+      <form id="login-form" class="login-box" novalidate>
+        <h1>Учёт успеваемости</h1>
+        <p class="muted">Вход в информационную систему</p>
+
+        <div id="login-error" class="error" hidden></div>
+
+        <label class="field">
+          Логин
+          <input id="login-username" name="username" type="text" autocomplete="username" required />
+        </label>
+        <label class="field">
+          Пароль
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required />
+        </label>
+
+        <button type="submit" class="btn" id="login-submit">Войти</button>
+
+        <p class="hint">
+          Демо-доступ: admin / admin123, teacher / teacher123, student / student123
+        </p>
+      </form>
+    </section>
+
+    <div id="app-screen" hidden>
+      <header class="header">
+        <strong>Учёт успеваемости</strong>
+        <div class="header-user">
+          <span id="user-name"></span>
+          <span id="user-role" class="muted"></span>
+          <button type="button" id="logout" class="btn btn-secondary">Выйти</button>
+        </div>
+      </header>
+
+      <nav id="nav" class="nav" aria-label="Основная навигация"></nav>
+
+      <main id="content" class="content"></main>
+    </div>
+
+    <p id="flash" class="flash" hidden></p>
+
+    <script type="module" src="/static/js/app.js"></script>
+  </body>
+</html>

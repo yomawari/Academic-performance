@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Тесты и инструменты
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Данные приложения (создаются при запуске)
+backend/data/*.db
+backend/data/*.db-*
+backend/data/secret.key
+
+# Среда и редакторы
+.env
+.idea/
+.vscode/
+*.log
+
+# ОС
+Thumbs.db
+desktop.ini
+.DS_Store

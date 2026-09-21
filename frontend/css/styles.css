@@ -1,0 +1,345 @@
+:root {
+  --border: #c9c9c9;
+  --muted: #666;
+  --accent: #29476b;
+  --bg: #f2f2f2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: #1f1f1f;
+  font: 15px/1.45 Arial, Helvetica, sans-serif;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Вход */
+
+.login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-box {
+  width: 340px;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 28px;
+}
+
+.login-box h1 {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.login-box .muted {
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.field {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font: inherit;
+}
+
+.field textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* Кнопки */
+
+.btn {
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--accent);
+}
+
+.btn-danger {
+  border-color: #8a2c2c;
+  background: #8a2c2c;
+}
+
+.btn-small {
+  padding: 3px 8px;
+  font-size: 13px;
+}
+
+.link-button {
+  padding: 0;
+  margin-left: 10px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-box .btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.hint {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.error {
+  margin-bottom: 14px;
+  padding: 8px;
+  border: 1px solid #d1a3a3;
+  background: #fbebeb;
+  color: #7a2020;
+  font-size: 14px;
+}
+
+/* Шапка и меню */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.header-user .muted {
+  color: #d5dde6;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-link {
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: #333;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  background: #f0f2f4;
+}
+
+.nav-link.active {
+  border-bottom-color: var(--accent);
+  font-weight: bold;
+}
+
+/* Содержимое */
+
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.page-head h1 {
+  font-size: 20px;
+}
+
+.panel {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.panel h2 {
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.stat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  flex: 1 1 150px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.stat small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+}
+
+/* Таблицы */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 14px;
+}
+
+th,
+td {
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #e8e8e8;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+td.actions {
+  white-space: nowrap;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Формы */
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 14px;
+}
+
+.fields .field {
+  flex: 1 1 180px;
+}
+
+.fields .field-wide {
+  flex-basis: 100%;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.flash {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  max-width: 320px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #7d9b78;
+  background: #eef6ec;
+  color: #24421f;
+  font-size: 14px;
+}
+
+.flash.error {
+  border-color: #d1a3a3;
+  background: #fbebeb;
+  color: #7a2020;
+}
+
+@media (max-width: 640px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .content {
+    padding: 12px;
+  }
+
+  .page-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
