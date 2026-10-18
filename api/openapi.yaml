@@ -20,6 +20,12 @@ tags:
     description: Преподаватели
   - name: Subjects
     description: Дисциплины
+  - name: Lessons
+    description: Занятия
+  - name: Journal
+    description: Оценки и посещаемость
+  - name: Reports
+    description: Отчёты и экспорт
   - name: Dashboard
     description: Сводные показатели
 paths:
@@ -372,6 +378,200 @@ paths:
           description: Дисциплина удалена
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/lessons:
+    get:
+      tags: [Lessons]
+      operationId: listLessons
+      summary: Список занятий
+      parameters:
+        - name: group_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: subject_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Список занятий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lesson'
+    post:
+      tags: [Lessons]
+      operationId: createLesson
+      summary: Добавить занятие
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LessonCreate'
+      responses:
+        '201':
+          description: Занятие добавлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lesson'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/lessons/{lesson_id}:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    get:
+      tags: [Lessons]
+      operationId: getLesson
+      summary: Занятие по идентификатору
+      responses:
+        '200':
+          description: Занятие
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lesson'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Lessons]
+      operationId: updateLesson
+      summary: Изменить занятие
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LessonUpdate'
+      responses:
+        '200':
+          description: Занятие изменено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lesson'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Lessons]
+      operationId: deleteLesson
+      summary: Удалить занятие
+      responses:
+        '204':
+          description: Занятие удалено
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/lessons/{lesson_id}/journal:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    get:
+      tags: [Journal]
+      operationId: getLessonJournal
+      summary: Журнал занятия
+      responses:
+        '200':
+          description: Журнал занятия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/lessons/{lesson_id}/journal/{student_id}:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+      - $ref: '#/components/parameters/StudentId'
+    put:
+      tags: [Journal]
+      operationId: saveJournalEntry
+      summary: Сохранить оценку и посещаемость студента
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalUpdate'
+      responses:
+        '200':
+          description: Запись журнала сохранена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/reports/groups/{group_id}:
+    parameters:
+      - $ref: '#/components/parameters/GroupId'
+    get:
+      tags: [Reports]
+      operationId: getGroupReport
+      summary: Сводная ведомость группы
+      responses:
+        '200':
+          description: Ведомость группы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupReport'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/reports/groups/{group_id}/export:
+    parameters:
+      - $ref: '#/components/parameters/GroupId'
+    get:
+      tags: [Reports]
+      operationId: exportGroupReport
+      summary: Экспорт ведомости группы в CSV
+      responses:
+        '200':
+          description: CSV-файл
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/reports/students/{student_id}:
+    parameters:
+      - $ref: '#/components/parameters/StudentId'
+    get:
+      tags: [Reports]
+      operationId: getStudentReport
+      summary: Успеваемость студента
+      responses:
+        '200':
+          description: Отчёт по студенту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentReport'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/dashboard:
     get:
       tags: [Dashboard]
@@ -414,6 +614,13 @@ components:
         minimum: 1
     SubjectId:
       name: subject_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    LessonId:
+      name: lesson_id
       in: path
       required: true
       schema:
@@ -771,6 +978,239 @@ components:
         teacher_id:
           type: integer
           nullable: true
+    LessonType:
+      type: string
+      enum: [lecture, practice, lab, test]
+    Lesson:
+      type: object
+      required:
+        - id
+        - subject_id
+        - subject_title
+        - group_id
+        - group_name
+        - lesson_date
+        - topic
+        - homework
+        - lesson_type
+        - grades_count
+      properties:
+        id:
+          type: integer
+        subject_id:
+          type: integer
+        subject_title:
+          type: string
+        group_id:
+          type: integer
+        group_name:
+          type: string
+        teacher_id:
+          type: integer
+          nullable: true
+        teacher_name:
+          type: string
+          nullable: true
+        lesson_date:
+          type: string
+          format: date
+        topic:
+          type: string
+        homework:
+          type: string
+        lesson_type:
+          $ref: '#/components/schemas/LessonType'
+        grades_count:
+          type: integer
+    LessonCreate:
+      type: object
+      required: [subject_id, group_id, lesson_date, topic]
+      properties:
+        subject_id:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          minimum: 1
+        teacher_id:
+          type: integer
+          nullable: true
+        lesson_date:
+          type: string
+          format: date
+        topic:
+          type: string
+          minLength: 2
+          maxLength: 200
+        homework:
+          type: string
+          maxLength: 500
+          default: ''
+        lesson_type:
+          $ref: '#/components/schemas/LessonType'
+    LessonUpdate:
+      type: object
+      properties:
+        subject_id:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          minimum: 1
+        teacher_id:
+          type: integer
+          nullable: true
+        lesson_date:
+          type: string
+          format: date
+        topic:
+          type: string
+          minLength: 2
+          maxLength: 200
+        homework:
+          type: string
+          maxLength: 500
+        lesson_type:
+          $ref: '#/components/schemas/LessonType'
+    AttendanceStatus:
+      type: string
+      enum: [present, absent, late, excused]
+    JournalEntry:
+      type: object
+      required: [student_id, full_name, record_book_no]
+      properties:
+        student_id:
+          type: integer
+        full_name:
+          type: string
+        record_book_no:
+          type: string
+        grade_id:
+          type: integer
+          nullable: true
+        grade_value:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        grade_comment:
+          type: string
+          default: ''
+        attendance_status:
+          allOf:
+            - $ref: '#/components/schemas/AttendanceStatus'
+          nullable: true
+        attendance_comment:
+          type: string
+          default: ''
+    Journal:
+      type: object
+      required: [lesson, entries]
+      properties:
+        lesson:
+          $ref: '#/components/schemas/Lesson'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalEntry'
+    JournalUpdate:
+      type: object
+      properties:
+        grade_value:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        grade_comment:
+          type: string
+          maxLength: 300
+          default: ''
+        attendance_status:
+          allOf:
+            - $ref: '#/components/schemas/AttendanceStatus'
+          nullable: true
+        attendance_comment:
+          type: string
+          maxLength: 300
+          default: ''
+    ReportStudent:
+      type: object
+      required: [student_id, full_name, record_book_no, grades_count, absences, lates]
+      properties:
+        student_id:
+          type: integer
+        full_name:
+          type: string
+        record_book_no:
+          type: string
+        average_grade:
+          type: number
+          format: float
+          nullable: true
+        grades_count:
+          type: integer
+        absences:
+          type: integer
+        lates:
+          type: integer
+    GroupReport:
+      type: object
+      required: [group_id, group_name, students]
+      properties:
+        group_id:
+          type: integer
+        group_name:
+          type: string
+        students:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportStudent'
+    StudentSubjectResult:
+      type: object
+      required: [subject_id, title, grades_count]
+      properties:
+        subject_id:
+          type: integer
+        title:
+          type: string
+        average_grade:
+          type: number
+          format: float
+          nullable: true
+        grades_count:
+          type: integer
+    StudentGrade:
+      type: object
+      required: [id, lesson_date, subject_title, value]
+      properties:
+        id:
+          type: integer
+        lesson_date:
+          type: string
+          format: date
+        subject_title:
+          type: string
+        value:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          default: ''
+    StudentReport:
+      type: object
+      required: [student, subjects, grades]
+      properties:
+        student:
+          $ref: '#/components/schemas/Student'
+        subjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentSubjectResult'
+        grades:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentGrade'
     DashboardStats:
       type: object
       required:

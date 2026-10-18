@@ -156,6 +156,56 @@ export class ApiClient {
     return this.request('DELETE', `/api/subjects/${encodeURIComponent(subject_id)}`);
   }
 
+  /** Список занятий */
+  listLessons(query = {}) {
+    return this.request('GET', '/api/lessons', { query });
+  }
+
+  /** Добавить занятие */
+  createLesson(body) {
+    return this.request('POST', '/api/lessons', { body });
+  }
+
+  /** Занятие по идентификатору */
+  getLesson(lesson_id) {
+    return this.request('GET', `/api/lessons/${encodeURIComponent(lesson_id)}`);
+  }
+
+  /** Изменить занятие */
+  updateLesson(lesson_id, body) {
+    return this.request('PATCH', `/api/lessons/${encodeURIComponent(lesson_id)}`, { body });
+  }
+
+  /** Удалить занятие */
+  deleteLesson(lesson_id) {
+    return this.request('DELETE', `/api/lessons/${encodeURIComponent(lesson_id)}`);
+  }
+
+  /** Журнал занятия */
+  getLessonJournal(lesson_id) {
+    return this.request('GET', `/api/lessons/${encodeURIComponent(lesson_id)}/journal`);
+  }
+
+  /** Сохранить оценку и посещаемость студента */
+  saveJournalEntry(lesson_id, student_id, body) {
+    return this.request('PUT', `/api/lessons/${encodeURIComponent(lesson_id)}/journal/${encodeURIComponent(student_id)}`, { body });
+  }
+
+  /** Сводная ведомость группы */
+  getGroupReport(group_id) {
+    return this.request('GET', `/api/reports/groups/${encodeURIComponent(group_id)}`);
+  }
+
+  /** Экспорт ведомости группы в CSV */
+  exportGroupReport(group_id) {
+    return this.request('GET', `/api/reports/groups/${encodeURIComponent(group_id)}/export`);
+  }
+
+  /** Успеваемость студента */
+  getStudentReport(student_id) {
+    return this.request('GET', `/api/reports/students/${encodeURIComponent(student_id)}`);
+  }
+
   /** Сводные показатели для главного экрана */
   getDashboard() {
     return this.request('GET', '/api/dashboard');

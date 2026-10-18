@@ -8,6 +8,10 @@ const ROLE_LABELS = {
 
 const PAGES = {
   dashboard: { title: "Главная", roles: ["admin", "teacher", "student"] },
+  lessons: { title: "Занятия", roles: ["admin", "teacher"] },
+  journal: { title: "Журнал", roles: ["admin", "teacher"] },
+  reports: { title: "Отчёты", roles: ["admin", "teacher"] },
+  "my-grades": { title: "Моя успеваемость", roles: ["student"] },
   students: { title: "Студенты", roles: ["admin", "teacher"] },
   groups: { title: "Группы", roles: ["admin", "teacher"] },
   subjects: { title: "Дисциплины", roles: ["admin", "teacher"] },
@@ -22,6 +26,9 @@ const state = {
   groups: [],
   teachers: [],
   subjects: [],
+  lessons: [],
+  lessonId: null,
+  reportGroupId: null,
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -35,6 +42,26 @@ const esc = (value) =>
 
 const avg = (value) =>
   value === null || value === undefined ? "—" : Number(value).toFixed(2).replace(".", ",");
+
+const fmtDate = (value) => (value ? String(value).split("-").reverse().join(".") : "—");
+
+const LESSON_TYPE_LABELS = {
+  lecture: "Лекция",
+  practice: "Практика",
+  lab: "Лабораторная",
+  test: "Контрольная",
+};
+
+const ATTENDANCE_LABELS = {
+  present: "Присутствовал",
+  absent: "Отсутствовал",
+  late: "Опоздал",
+  excused: "Уважительная причина",
+};
+
+function currentTeacherId() {
+  return state.teachers.find((teacher) => teacher.username === state.user?.username)?.id ?? null;
+}
 
 let flashTimer = null;
 
@@ -134,6 +161,10 @@ async function renderPage(page) {
 
   try {
     if (page === "dashboard") await renderDashboard(content);
+    else if (page === "lessons") await renderLessons(content);
+    else if (page === "journal") await renderJournal(content);
+    else if (page === "reports") await renderReports(content);
+    else if (page === "my-grades") await renderMyGrades(content);
     else if (page === "students") await renderStudents(content);
     else if (page === "groups") await renderGroups(content);
     else if (page === "subjects") await renderSubjects(content);
@@ -214,6 +245,397 @@ async function renderDashboard(content) {
                     <td>${group.course}</td>
                     <td>${esc(group.curator_name || "—")}</td>
                     <td>${group.student_count}</td>
+                  </tr>`,
+                    )
+                    .join("")
+                : emptyRow(4)
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* Занятия */
+
+async function renderLessons(content) {
+  const [lessons, groups, subjects, teachers] = await Promise.all([
+    api.listLessons(),
+    api.listGroups(),
+    api.listSubjects(),
+    api.listTeachers(),
+  ]);
+  state.lessons = lessons;
+  state.groups = groups;
+  state.subjects = subjects;
+  state.teachers = teachers;
+
+  const form =
+    state.form?.entity === "lesson" ? lessonForm(lessons.find((item) => item.id === state.form.id)) : "";
+  const action = isAdmin()
+    ? `<button type="button" class="btn" data-action="new-lesson">Добавить занятие</button>`
+    : "";
+  const teacherId = currentTeacherId();
+
+  content.innerHTML = `
+    ${pageHead("Занятия", action)}
+    ${form}
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Дата</th><th>Группа</th><th>Дисциплина</th><th>Преподаватель</th><th>Вид</th><th>Тема</th><th>Действия</th></tr>
+          </thead>
+          <tbody>
+            ${
+              lessons.length
+                ? lessons
+                    .map((lesson) => {
+                      const canJournal =
+                        isAdmin() || (teacherId !== null && lesson.teacher_id === teacherId);
+                      const actions = [
+                        canJournal
+                          ? `<button type="button" class="btn btn-secondary btn-small" data-action="open-journal" data-id="${lesson.id}">Журнал</button>`
+                          : "",
+                        isAdmin()
+                          ? `<button type="button" class="btn btn-secondary btn-small" data-action="edit-lesson" data-id="${lesson.id}">Изменить</button>
+                             <button type="button" class="btn btn-danger btn-small" data-action="delete-lesson" data-id="${lesson.id}">Удалить</button>`
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ");
+                      return `
+                        <tr>
+                          <td>${fmtDate(lesson.lesson_date)}</td>
+                          <td>${esc(lesson.group_name)}</td>
+                          <td>${esc(lesson.subject_title)}</td>
+                          <td>${esc(lesson.teacher_name || "—")}</td>
+                          <td>${esc(LESSON_TYPE_LABELS[lesson.lesson_type] || lesson.lesson_type)}</td>
+                          <td>${esc(lesson.topic)}</td>
+                          <td class="actions">${actions || '<span class="muted">—</span>'}</td>
+                        </tr>`;
+                    })
+                    .join("")
+                : emptyRow(7)
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function lessonForm(lesson) {
+  const editing = Boolean(lesson);
+  const subjectOptions = state.subjects
+    .map(
+      (subject) =>
+        `<option value="${subject.id}" ${lesson?.subject_id === subject.id ? "selected" : ""}>${esc(subject.title)}</option>`,
+    )
+    .join("");
+  const groupOptions = state.groups
+    .map(
+      (group) =>
+        `<option value="${group.id}" ${lesson?.group_id === group.id ? "selected" : ""}>${esc(group.name)}</option>`,
+    )
+    .join("");
+  const teacherOptions = state.teachers
+    .map(
+      (teacher) =>
+        `<option value="${teacher.id}" ${lesson?.teacher_id === teacher.id ? "selected" : ""}>${esc(teacher.full_name)}</option>`,
+    )
+    .join("");
+  const typeOptions = Object.entries(LESSON_TYPE_LABELS)
+    .map(
+      ([value, label]) =>
+        `<option value="${value}" ${lesson?.lesson_type === value ? "selected" : ""}>${label}</option>`,
+    )
+    .join("");
+
+  return `
+    <form class="panel" data-entity="lesson">
+      <h2>${editing ? "Изменить занятие" : "Новое занятие"}</h2>
+      <div class="fields">
+        <label class="field">Дата
+          <input name="lesson_date" type="date" required value="${esc(lesson?.lesson_date || new Date().toISOString().slice(0, 10))}" />
+        </label>
+        <label class="field">Вид занятия
+          <select name="lesson_type">${typeOptions}</select>
+        </label>
+        <label class="field field-wide">Дисциплина
+          <select name="subject_id" required>${subjectOptions}</select>
+        </label>
+        <label class="field">Группа
+          <select name="group_id" required>${groupOptions}</select>
+        </label>
+        <label class="field">Преподаватель
+          <select name="teacher_id">
+            <option value="">Не назначен</option>
+            ${teacherOptions}
+          </select>
+        </label>
+        <label class="field field-wide">Тема
+          <input name="topic" required minlength="2" maxlength="200" value="${esc(lesson?.topic)}" />
+        </label>
+        <label class="field field-wide">Домашнее задание
+          <textarea name="homework" maxlength="500">${esc(lesson?.homework)}</textarea>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn">${editing ? "Сохранить" : "Добавить"}</button>
+        <button type="button" class="btn btn-secondary" data-action="cancel-form">Отмена</button>
+      </div>
+    </form>`;
+}
+
+/* Журнал */
+
+async function renderJournal(content) {
+  const allLessons = await api.listLessons();
+  const teachers = await api.listTeachers();
+  state.teachers = teachers;
+
+  let lessons = allLessons;
+  if (state.user.role === "teacher") {
+    const teacherId = currentTeacherId();
+    lessons = teacherId === null ? [] : allLessons.filter((lesson) => lesson.teacher_id === teacherId);
+  }
+
+  if (!lessons.length) {
+    content.innerHTML = `
+      ${pageHead("Журнал")}
+      <div class="panel"><p class="muted">Для ваших занятий журнал пока недоступен.</p></div>`;
+    return;
+  }
+
+  if (!lessons.some((lesson) => lesson.id === state.lessonId)) {
+    state.lessonId = lessons[0].id;
+  }
+  const journal = await api.getLessonJournal(state.lessonId);
+  const lesson = journal.lesson;
+  const lessonOptions = lessons
+    .map(
+      (item) =>
+        `<option value="${item.id}" ${item.id === state.lessonId ? "selected" : ""}>${fmtDate(item.lesson_date)} · ${esc(item.group_name)} · ${esc(item.subject_title)}</option>`,
+    )
+    .join("");
+
+  content.innerHTML = `
+    ${pageHead("Журнал")}
+    <div class="panel">
+      <label class="field">Занятие
+        <select data-role="lesson-select">${lessonOptions}</select>
+      </label>
+      <p class="muted">${esc(lesson.group_name)} · ${esc(lesson.subject_title)} · ${esc(lesson.teacher_name || "преподаватель не назначен")} · ${fmtDate(lesson.lesson_date)}</p>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table class="journal-table">
+          <thead>
+            <tr><th>Студент</th><th>Зачётка</th><th>Оценка</th><th>Комментарий</th><th>Посещаемость</th><th>Комментарий</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${
+              journal.entries.length
+                ? journal.entries
+                    .map(
+                      (entry) => `
+                  <tr data-student="${entry.student_id}">
+                    <td>${esc(entry.full_name)}</td>
+                    <td>${esc(entry.record_book_no)}</td>
+                    <td>
+                      <select data-field="grade">
+                        <option value="">—</option>
+                        ${[5, 4, 3, 2]
+                          .map(
+                            (value) =>
+                              `<option value="${value}" ${entry.grade_value === value ? "selected" : ""}>${value}</option>`,
+                          )
+                          .join("")}
+                      </select>
+                    </td>
+                    <td><input data-field="grade-comment" maxlength="300" value="${esc(entry.grade_comment)}" /></td>
+                    <td>
+                      <select data-field="attendance">
+                        <option value="">—</option>
+                        ${Object.entries(ATTENDANCE_LABELS)
+                          .map(
+                            ([value, label]) =>
+                              `<option value="${value}" ${entry.attendance_status === value ? "selected" : ""}>${label}</option>`,
+                          )
+                          .join("")}
+                      </select>
+                    </td>
+                    <td><input data-field="attendance-comment" maxlength="300" value="${esc(entry.attendance_comment)}" /></td>
+                    <td class="actions"><button type="button" class="btn btn-small" data-action="save-entry">Сохранить</button></td>
+                  </tr>`,
+                    )
+                    .join("")
+                : emptyRow(7)
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function saveJournalRow(button) {
+  const row = button.closest("tr[data-student]");
+  if (!row) return;
+  const grade = row.querySelector('[data-field="grade"]').value;
+  const attendance = row.querySelector('[data-field="attendance"]').value;
+  try {
+    await api.saveJournalEntry(state.lessonId, Number(row.dataset.student), {
+      grade_value: grade === "" ? null : Number(grade),
+      grade_comment: row.querySelector('[data-field="grade-comment"]').value.trim(),
+      attendance_status: attendance === "" ? null : attendance,
+      attendance_comment: row.querySelector('[data-field="attendance-comment"]').value.trim(),
+    });
+    flash("Запись журнала сохранена");
+    await renderPage("journal");
+  } catch (error) {
+    flash(error?.detail || "Не удалось сохранить запись", true);
+  }
+}
+
+/* Отчёты */
+
+async function renderReports(content) {
+  const groups = await api.listGroups();
+  state.groups = groups;
+
+  if (!groups.length) {
+    content.innerHTML = `
+      ${pageHead("Отчёты")}
+      <div class="panel"><p class="muted">Учебные группы не найдены.</p></div>`;
+    return;
+  }
+
+  if (!groups.some((group) => group.id === state.reportGroupId)) {
+    state.reportGroupId = groups[0].id;
+  }
+  const report = await api.getGroupReport(state.reportGroupId);
+  const groupOptions = groups
+    .map(
+      (group) =>
+        `<option value="${group.id}" ${group.id === state.reportGroupId ? "selected" : ""}>${esc(group.name)}</option>`,
+    )
+    .join("");
+  const averages = report.students
+    .map((student) => student.average_grade)
+    .filter((value) => value !== null);
+  const overall = averages.length
+    ? averages.reduce((sum, value) => sum + value, 0) / averages.length
+    : null;
+  const download = `<a class="btn btn-secondary" href="/api/reports/groups/${state.reportGroupId}/export" download>Скачать CSV</a>`;
+
+  content.innerHTML = `
+    ${pageHead("Отчёты", download)}
+    <div class="panel">
+      <label class="field">Учебная группа
+        <select data-role="report-group">${groupOptions}</select>
+      </label>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><small>Группа</small><strong>${esc(report.group_name)}</strong></div>
+      <div class="stat"><small>Студентов</small><strong>${report.students.length}</strong></div>
+      <div class="stat"><small>Средний балл</small><strong>${avg(overall)}</strong></div>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ФИО</th><th>Зачётная книжка</th><th>Средний балл</th><th>Оценок</th><th>Пропусков</th><th>Опозданий</th></tr></thead>
+          <tbody>
+            ${
+              report.students.length
+                ? report.students
+                    .map(
+                      (student) => `
+                  <tr>
+                    <td>${esc(student.full_name)}</td>
+                    <td>${esc(student.record_book_no)}</td>
+                    <td>${avg(student.average_grade)}</td>
+                    <td>${student.grades_count}</td>
+                    <td>${student.absences}</td>
+                    <td>${student.lates}</td>
+                  </tr>`,
+                    )
+                    .join("")
+                : emptyRow(6)
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* Моя успеваемость */
+
+async function renderMyGrades(content) {
+  const students = await api.listStudents();
+  const me = students[0];
+  if (!me) {
+    content.innerHTML = `
+      ${pageHead("Моя успеваемость")}
+      <div class="panel"><p class="muted">Карточка студента не найдена.</p></div>`;
+    return;
+  }
+
+  const report = await api.getStudentReport(me.id);
+  const totalGrades = report.subjects.reduce((sum, subject) => sum + subject.grades_count, 0);
+  const weighted = report.subjects.reduce(
+    (sum, subject) => sum + (subject.average_grade || 0) * subject.grades_count,
+    0,
+  );
+  const overall = totalGrades ? weighted / totalGrades : null;
+
+  content.innerHTML = `
+    ${pageHead("Моя успеваемость")}
+    <div class="stat-grid">
+      <div class="stat"><small>Группа</small><strong>${esc(me.group_name || "—")}</strong></div>
+      <div class="stat"><small>Дисциплин</small><strong>${report.subjects.length}</strong></div>
+      <div class="stat"><small>Оценок</small><strong>${totalGrades}</strong></div>
+      <div class="stat"><small>Средний балл</small><strong>${avg(overall)}</strong></div>
+    </div>
+    <div class="panel">
+      <h2>По дисциплинам</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дисциплина</th><th>Средний балл</th><th>Оценок</th></tr></thead>
+          <tbody>
+            ${
+              report.subjects.length
+                ? report.subjects
+                    .map(
+                      (subject) => `
+                  <tr>
+                    <td>${esc(subject.title)}</td>
+                    <td>${avg(subject.average_grade)}</td>
+                    <td>${subject.grades_count}</td>
+                  </tr>`,
+                    )
+                    .join("")
+                : emptyRow(3)
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Последние оценки</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дата</th><th>Дисциплина</th><th>Оценка</th><th>Комментарий</th></tr></thead>
+          <tbody>
+            ${
+              report.grades.length
+                ? report.grades
+                    .map(
+                      (grade) => `
+                  <tr>
+                    <td>${fmtDate(grade.lesson_date)}</td>
+                    <td>${esc(grade.subject_title)}</td>
+                    <td>${grade.value}</td>
+                    <td>${esc(grade.comment || "—")}</td>
                   </tr>`,
                     )
                     .join("")
@@ -643,6 +1065,17 @@ async function submitForm(form) {
       teacher_id: nullable(form, "teacher_id") ? Number(formValue(form, "teacher_id")) : null,
     };
     method = editing ? "updateSubject" : "createSubject";
+  } else if (entity === "lesson") {
+    payload = {
+      subject_id: Number(formValue(form, "subject_id")),
+      group_id: Number(formValue(form, "group_id")),
+      teacher_id: nullable(form, "teacher_id") ? Number(formValue(form, "teacher_id")) : null,
+      lesson_date: formValue(form, "lesson_date"),
+      topic: formValue(form, "topic"),
+      homework: formValue(form, "homework"),
+      lesson_type: formValue(form, "lesson_type"),
+    };
+    method = editing ? "updateLesson" : "createLesson";
   } else {
     payload = {
       full_name: formValue(form, "full_name"),
@@ -677,6 +1110,7 @@ const DELETE_NAMES = {
   group: "группу",
   subject: "дисциплину",
   teacher: "преподавателя",
+  lesson: "занятие",
 };
 
 async function deleteEntity(entity, id) {
@@ -713,6 +1147,15 @@ function onContentClick(event) {
   }
   if (action.startsWith("delete-")) {
     deleteEntity(action.slice(7), id);
+    return;
+  }
+  if (action === "open-journal") {
+    state.lessonId = id;
+    navigate("journal");
+    return;
+  }
+  if (action === "save-entry") {
+    saveJournalRow(button);
   }
 }
 
@@ -756,6 +1199,19 @@ function bindEvents() {
   });
 
   $("#content").addEventListener("click", onContentClick);
+
+  $("#content").addEventListener("change", (event) => {
+    const lessonSelect = event.target.closest("[data-role='lesson-select']");
+    const reportSelect = event.target.closest("[data-role='report-group']");
+    if (lessonSelect && state.page === "journal") {
+      state.lessonId = Number(lessonSelect.value);
+      renderPage("journal");
+    }
+    if (reportSelect && state.page === "reports") {
+      state.reportGroupId = Number(reportSelect.value);
+      renderPage("reports");
+    }
+  });
 
   $("#content").addEventListener("submit", (event) => {
     const form = event.target.closest("form[data-entity]");

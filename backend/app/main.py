@@ -15,7 +15,17 @@ from . import config
 from .db import init_db, session
 from .deps import require_admin
 from .errors import APIError, api_error_handler
-from .routers import auth, dashboard, groups, students, subjects, teachers
+from .routers import (
+    auth,
+    dashboard,
+    groups,
+    journal,
+    lessons,
+    reports,
+    students,
+    subjects,
+    teachers,
+)
 
 
 def ensure_database() -> None:
@@ -83,6 +93,9 @@ app.include_router(groups.router)
 app.include_router(students.router)
 app.include_router(teachers.router)
 app.include_router(subjects.router)
+app.include_router(lessons.router)
+app.include_router(journal.router)
+app.include_router(reports.router)
 app.include_router(dashboard.router)
 
 

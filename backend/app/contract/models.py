@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from enum import StrEnum
 
 from pydantic import AwareDatetime, BaseModel, EmailStr, Field, conint, constr
@@ -150,6 +151,115 @@ class SubjectUpdate(BaseModel):
     description: constr(max_length=1000) | None = None
     hours: conint(ge=0, le=1000) | None = None
     teacher_id: int | None = None
+
+
+class LessonType(StrEnum):
+    lecture = 'lecture'
+    practice = 'practice'
+    lab = 'lab'
+    test = 'test'
+
+
+class Lesson(BaseModel):
+    id: int
+    subject_id: int
+    subject_title: str
+    group_id: int
+    group_name: str
+    teacher_id: int | None = None
+    teacher_name: str | None = None
+    lesson_date: date
+    topic: str
+    homework: str
+    lesson_type: LessonType
+    grades_count: int
+
+
+class LessonCreate(BaseModel):
+    subject_id: conint(ge=1)
+    group_id: conint(ge=1)
+    teacher_id: int | None = None
+    lesson_date: date
+    topic: constr(min_length=2, max_length=200)
+    homework: constr(max_length=500) | None = ''
+    lesson_type: LessonType | None = None
+
+
+class LessonUpdate(BaseModel):
+    subject_id: conint(ge=1) | None = None
+    group_id: conint(ge=1) | None = None
+    teacher_id: int | None = None
+    lesson_date: date | None = None
+    topic: constr(min_length=2, max_length=200) | None = None
+    homework: constr(max_length=500) | None = None
+    lesson_type: LessonType | None = None
+
+
+class AttendanceStatus(StrEnum):
+    present = 'present'
+    absent = 'absent'
+    late = 'late'
+    excused = 'excused'
+
+
+class JournalEntry(BaseModel):
+    student_id: int
+    full_name: str
+    record_book_no: str
+    grade_id: int | None = None
+    grade_value: conint(ge=1, le=5) | None = None
+    grade_comment: str | None = ''
+    attendance_status: AttendanceStatus | None = None
+    attendance_comment: str | None = ''
+
+
+class Journal(BaseModel):
+    lesson: Lesson
+    entries: list[JournalEntry]
+
+
+class JournalUpdate(BaseModel):
+    grade_value: conint(ge=1, le=5) | None = None
+    grade_comment: constr(max_length=300) | None = ''
+    attendance_status: AttendanceStatus | None = None
+    attendance_comment: constr(max_length=300) | None = ''
+
+
+class ReportStudent(BaseModel):
+    student_id: int
+    full_name: str
+    record_book_no: str
+    average_grade: float | None = None
+    grades_count: int
+    absences: int
+    lates: int
+
+
+class GroupReport(BaseModel):
+    group_id: int
+    group_name: str
+    students: list[ReportStudent]
+
+
+class StudentSubjectResult(BaseModel):
+    subject_id: int
+    title: str
+    average_grade: float | None = None
+    grades_count: int
+
+
+class StudentGrade(BaseModel):
+    id: int
+    lesson_date: date
+    subject_title: str
+    value: conint(ge=1, le=5)
+    comment: str | None = ''
+
+
+class StudentReport(BaseModel):
+    student: Student
+    subjects: list[StudentSubjectResult]
+    grades: list[StudentGrade]
 
 
 class DashboardStats(BaseModel):
