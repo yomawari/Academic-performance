@@ -1,4 +1,4 @@
-import { api, ApiError } from "./api-client.js";
+import { api, ApiError } from "./api-client.js?v=2";
 
 const ROLE_LABELS = {
   admin: "Администратор",

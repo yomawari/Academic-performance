@@ -79,6 +79,8 @@ async def security_headers(request: Request, call_next):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "same-origin")
+    if request.url.path == "/" or request.url.path.startswith("/static/"):
+        response.headers.setdefault("Cache-Control", "no-cache")
     response.headers.setdefault(
         "Content-Security-Policy",
         "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
