@@ -1,0 +1,55 @@
+@startuml
+skinparam dpi 200
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 15
+skinparam node {
+  BackgroundColor #F7F9FC
+  BorderColor #29476B
+  BorderThickness 1.2
+}
+skinparam component {
+  BackgroundColor #EEF3F9
+  BorderColor #29476B
+  BorderThickness 1.0
+}
+skinparam artifact {
+  BackgroundColor #FFFFFF
+  BorderColor #29476B
+}
+skinparam database {
+  BackgroundColor #EEF3F9
+  BorderColor #29476B
+}
+
+node "Рабочая станция пользователя" as Workstation {
+  artifact "Браузер\nChrome / Edge / Firefox" as Browser
+  artifact "SPA\nHTML + CSS + JavaScript" as SPA
+}
+
+node "Сервер приложения\n127.0.0.1:8000" as Server {
+  component "FastAPI + Uvicorn" as API
+  component "Статические файлы\n/frontend" as Static
+  component "Pydantic-модели\nи обработчики ошибок" as Validation
+  database "SQLite\nbackend/data/academic.db" as DB
+  artifact "api/openapi.yaml" as Contract
+  artifact "Журнал audit_log\nи CSV-экспорт" as Audit
+}
+
+Browser --> SPA : загружает
+SPA --> API : HTTPS / JSON\nCookie access_token
+API --> Static : отдаёт SPA
+API --> Validation : валидирует запросы
+API --> DB : sqlite3,\nпараметризованные SQL
+API --> Audit : пишет действия
+API ..> Contract : реализует контракт
+Contract ..> SPA : генерация\nJS-клиента
+
+note right of Server
+  Один процесс Uvicorn.
+  База данных — локальный файл,
+  отдельный сервер СУБД не требуется.
+end note
+
+@enduml

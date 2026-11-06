@@ -1,0 +1,46 @@
+@startuml
+skinparam dpi 200
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 17
+skinparam sequence {
+  ArrowColor #29476B
+  ActorBorderColor #29476B
+  LifeLineBorderColor #7A8FA6
+  ParticipantBorderColor #29476B
+  ParticipantBackgroundColor #EEF3F9
+  GroupBorderColor #29476B
+  GroupBackgroundColor #F7F9FC
+}
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Преподаватель" as Teacher
+participant "SPA\n(JavaScript)" as SPA
+participant "API\n(FastAPI)" as API
+database "SQLite" as DB
+
+Teacher -> SPA : Открыть журнал
+SPA -> API : GET /journal
+API -> API : Проверить сессию\nи роль
+API -> DB : SELECT студентов,\nоценок, посещаемости
+DB --> API : строки
+API --> SPA : 200 OK, JSON
+SPA --> Teacher : Таблица журнала
+
+Teacher -> SPA : Изменить оценку\nи посещаемость
+SPA -> API : PUT /journal/{student_id}
+API -> API : Валидация Pydantic
+API -> DB : UPSERT grades / attendance
+DB --> API : OK
+API -> DB : INSERT audit_log
+API --> SPA : 200 OK, JournalEntry
+SPA --> Teacher : «Запись сохранена»
+
+alt Ошибка
+  API --> SPA : 422 / 403
+  SPA --> Teacher : Сообщение об ошибке
+end
+
+@enduml

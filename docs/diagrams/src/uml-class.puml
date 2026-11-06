@@ -1,0 +1,125 @@
+@startuml
+skinparam dpi 200
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F7F9FC
+  BorderColor #29476B
+  BorderThickness 1.1
+  HeaderBackgroundColor #DCE7F3
+  FontColor #1F1F1F
+}
+hide circle
+hide empty members
+
+class "Пользователь" as User {
+  id : INTEGER <<PK>>
+  username : TEXT <<UNIQUE>>
+  password_hash : TEXT
+  full_name : TEXT
+  role : ENUM
+  is_active : BOOLEAN
+  created_at : DATETIME
+  last_login_at : DATETIME
+}
+
+class "Преподаватель" as Teacher {
+  id : INTEGER <<PK>>
+  user_id : INTEGER <<FK, UNIQUE>>
+  department : TEXT
+  position : TEXT
+}
+
+class "Студент" as Student {
+  id : INTEGER <<PK>>
+  user_id : INTEGER <<FK, UNIQUE>>
+  group_id : INTEGER <<FK>>
+  record_book_no : TEXT <<UNIQUE>>
+  email : TEXT
+  phone : TEXT
+}
+
+class "Учебная группа" as Group {
+  id : INTEGER <<PK>>
+  name : TEXT <<UNIQUE>>
+  course : INTEGER
+  curator_id : INTEGER <<FK>>
+  created_at : DATETIME
+}
+
+class "Дисциплина" as Subject {
+  id : INTEGER <<PK>>
+  code : TEXT <<UNIQUE>>
+  title : TEXT
+  description : TEXT
+  hours : INTEGER
+  teacher_id : INTEGER <<FK>>
+}
+
+class "Занятие" as Lesson {
+  id : INTEGER <<PK>>
+  subject_id : INTEGER <<FK>>
+  group_id : INTEGER <<FK>>
+  teacher_id : INTEGER <<FK>>
+  lesson_date : DATE
+  topic : TEXT
+  homework : TEXT
+  lesson_type : ENUM
+}
+
+class "Оценка" as Grade {
+  id : INTEGER <<PK>>
+  student_id : INTEGER <<FK>>
+  lesson_id : INTEGER <<FK>>
+  value : INTEGER 1..5
+  comment : TEXT
+  created_by : INTEGER <<FK>>
+  created_at : DATETIME
+  updated_at : DATETIME
+}
+
+class "Посещаемость" as Attendance {
+  id : INTEGER <<PK>>
+  student_id : INTEGER <<FK>>
+  lesson_id : INTEGER <<FK>>
+  status : ENUM
+  comment : TEXT
+}
+
+class "Журнал действий" as AuditLog {
+  id : INTEGER <<PK>>
+  user_id : INTEGER <<FK>>
+  action : TEXT
+  entity : TEXT
+  entity_id : INTEGER
+  details : TEXT
+  created_at : DATETIME
+}
+
+User "1" -- "0..1" Teacher : профиль >
+User "1" -- "0..1" Student : профиль >
+Group "1" -- "0..*" Student : обучается >
+Teacher "0..1" -- "0..*" Group : куратор >
+Teacher "0..*" -- "0..*" Subject : преподаёт >
+Group "0..*" -- "0..*" Subject : учебный план >
+Subject "1" -- "0..*" Lesson : содержит >
+Group "1" -- "0..*" Lesson : проводится для >
+Teacher "0..1" -- "0..*" Lesson : ведёт >
+Lesson "1" -- "0..*" Grade : оценивается >
+Student "1" -- "0..*" Grade : получает >
+Lesson "1" -- "0..*" Attendance : посещается >
+Student "1" -- "0..*" Attendance : отмечается >
+User "1" -- "0..*" AuditLog : выполняет >
+
+note right of Grade
+  UNIQUE (student_id, lesson_id)
+end note
+
+note right of Attendance
+  UNIQUE (student_id, lesson_id)
+end note
+
+@enduml

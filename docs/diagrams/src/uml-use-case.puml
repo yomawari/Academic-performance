@@ -1,0 +1,59 @@
+@startuml
+skinparam dpi 200
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 16
+skinparam usecase {
+  BackgroundColor #EEF3F9
+  BorderColor #29476B
+  BorderThickness 1.2
+  FontColor #1F1F1F
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #29476B
+  FontColor #1F1F1F
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #29476B
+  BorderThickness 1.0
+}
+left to right direction
+
+actor "Администратор" as Admin
+actor "Преподаватель" as Teacher
+actor "Студент" as Student
+
+rectangle "Информационная система\n«Учёт успеваемости»" {
+  usecase "Авторизоваться\nв системе" as UC_AUTH
+  usecase "Просмотреть\nглавную панель" as UC_DASH
+  usecase "Вести справочники\n(группы, студенты,\nпреподаватели, дисциплины)" as UC_DIR
+  usecase "Управлять\nзанятиями" as UC_LESSONS
+  usecase "Заполнить журнал\nоценок и посещаемости" as UC_JOURNAL
+  usecase "Формировать отчёты\nпо группе" as UC_REPORTS
+  usecase "Экспортировать\nотчёт в CSV" as UC_CSV
+  usecase "Просмотреть личную\nуспеваемость" as UC_MY
+}
+
+Admin --> UC_AUTH
+Admin --> UC_DASH
+Admin --> UC_DIR
+Admin --> UC_LESSONS
+Admin --> UC_JOURNAL
+Admin --> UC_REPORTS
+Admin --> UC_CSV
+
+Teacher --> UC_AUTH
+Teacher --> UC_DASH
+Teacher --> UC_LESSONS
+Teacher --> UC_JOURNAL
+Teacher --> UC_REPORTS
+Teacher --> UC_CSV
+
+Student --> UC_AUTH
+Student --> UC_DASH
+Student --> UC_MY
+
+@enduml

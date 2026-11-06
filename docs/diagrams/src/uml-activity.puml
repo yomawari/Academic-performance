@@ -1,0 +1,42 @@
+@startuml
+skinparam dpi 200
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 15
+skinparam activity {
+  BackgroundColor #EEF3F9
+  BorderColor #29476B
+  BorderThickness 1.1
+  FontColor #1F1F1F
+  DiamondBackgroundColor #F7F9FC
+  DiamondBorderColor #29476B
+}
+skinparam arrowColor #29476B
+
+start
+:Открыть страницу «Журнал»;
+:Выбрать занятие из списка;
+:Запросить журнал занятия;
+if (Сессия действительна\nи роль разрешает доступ?) then (да)
+  :Загрузить студентов группы\nи текущие оценки;
+  :Отобразить таблицу журнала;
+  repeat
+    :Изменить оценку\nили посещаемость;
+    :Отправить данные на сервер;
+    if (Данные корректны?) then (да)
+      :Выполнить UPSERT\nв grades / attendance;
+      :Записать действие\nв audit_log;
+      :Показать подтверждение;
+    else (нет)
+      :Показать ошибку валидации;
+    endif
+  repeat while (Продолжить редактирование?) is (да)
+  ->нет;
+  :Завершить работу\nс журналом;
+else (нет)
+  :Вернуть 401 Unauthorized\nили 403 Forbidden;
+endif
+stop
+
+@enduml
